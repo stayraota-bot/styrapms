@@ -6,17 +6,17 @@ import { attempt, parse, zf, type ActionState } from "@/lib/action";
 import { can } from "@/lib/permissions";
 import { LEAD_STATUS_LABEL } from "@/lib/format";
 
-export const LEAD_SOURCES = [
+const LEAD_SOURCES = [
   "whatsapp", "phone_call", "instagram", "facebook", "website", "google",
   "airbnb_inquiry", "makemytrip_inquiry", "referral", "repeat_guest", "travel_agent", "walk_in", "other",
 ] as const;
 
-export const LEAD_STATUSES = [
+const LEAD_STATUSES = [
   "new", "contacted", "quoted", "follow_up", "negotiation", "won", "lost",
 ] as const;
 
-export const LEAD_TEMPS = ["hot", "warm", "cold"] as const;
-export const LEAD_ACTIVITY_TYPES = ["note", "call", "whatsapp", "email", "quote_sent", "status_change", "reminder_set", "converted"] as const;
+const LEAD_TEMPS = ["hot", "warm", "cold"] as const;
+const LEAD_ACTIVITY_TYPES = ["note", "call", "whatsapp", "email", "quote_sent", "status_change", "reminder_set", "converted"] as const;
 const METHODS = ["cash", "upi", "bank_transfer", "card", "ota_collection", "cheque", "other"] as const;
 
 const deny = (m = "You don't have permission to manage leads.") => Object.assign(new Error(m), { code: "42501" });
