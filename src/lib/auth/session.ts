@@ -44,14 +44,14 @@ export async function issueLocalSession(userId: string) {
 }
 
 async function sessionUserId(): Promise<string | null> {
-  if (env.authMode === "local") {
-    const token = (await cookies()).get(LOCAL_COOKIE)?.value;
-    if (!token) return null;
+  const token = (await cookies()).get(LOCAL_COOKIE)?.value;
+  if (token) {
     try {
       const { payload } = await jwtVerify(token, secretKey());
-      return typeof payload.sub === "string" ? payload.sub : null;
-    } catch { return null; }
+      if (typeof payload.sub === "string") return payload.sub;
+    } catch { /* fall through */ }
   }
+  if (env.authMode === "local") return null;
   const supabase = await supabaseServer();
   const { data } = await supabase.auth.getUser(); // verifies the JWT with Supabase Auth
   return data.user?.id ?? null;

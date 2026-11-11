@@ -4,7 +4,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["postgres", "@react-pdf/renderer", "exceljs", "bcryptjs"],
   experimental: { serverActions: { bodySizeLimit: "12mb" } },
-  outputFileTracingIncludes: { "/api/settlements/[id]/pdf": ["./src/assets/fonts/**"] },
+  outputFileTracingIncludes: {
+    "/api/settlements/[id]/pdf": ["./src/assets/fonts/**"],
+    "/login": ["./supabase/**"],
+  },
   async headers() {
     return [{
       source: "/(.*)",

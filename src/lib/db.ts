@@ -7,13 +7,31 @@ export type Tx = postgres.TransactionSql<Record<string, never>>;
 
 const g = globalThis as unknown as { __stayraSql?: Sql };
 
+function cleanDatabaseUrl(raw: string): { url: string; ssl: boolean } {
+  try {
+    const u = new URL(raw);
+    const isLocal = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    u.searchParams.delete("pgbouncer");
+    u.searchParams.delete("supa");
+    u.searchParams.delete("connection_limit");
+    u.searchParams.delete("pool_timeout");
+    u.searchParams.delete("sslmode");
+    return { url: u.toString(), ssl: !isLocal };
+  } catch {
+    return { url: raw, ssl: !raw.includes("localhost") && !raw.includes("127.0.0.1") };
+  }
+}
+
 function create(): Sql {
-  return postgres(env.databaseUrl, {
+  const { url, ssl } = cleanDatabaseUrl(env.databaseUrl);
+  return postgres(url, {
+    ssl: ssl ? "require" : false,
     prepare: false, // required for Supabase transaction pooler
     max: process.env.VERCEL ? 3 : 8,
     idle_timeout: 20,
     connect_timeout: 15,
-    connection: { TimeZone: "Asia/Kolkata", application_name: "stayra-pms" },
+    onnotice: () => {},
+    connection: { TimeZone: "Asia/Kolkata", application_name: "stayra-pms", search_path: "public, extensions" },
     // Keep DATE columns as 'YYYY-MM-DD' strings (no timezone shifting) and numerics as exact strings.
     types: {
       date: { to: 1082, from: [1082], serialize: (x: string) => x, parse: (x: string) => x },

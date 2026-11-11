@@ -6,6 +6,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { sysSql } from "@/lib/db";
 import { issueLocalSession, supabaseServer, LOCAL_COOKIE, getCurrentUser } from "@/lib/auth/session";
+import { ensureBootstrapped } from "@/server/bootstrap";
 import type { ActionState } from "@/lib/action";
 
 async function logEvent(userId: string | null, email: string, event: string) {
@@ -28,16 +29,22 @@ export async function login(_: ActionState, fd: FormData): Promise<ActionState> 
   let userId: string | null = null;
   let role = "operations";
   try {
-    if (env.authMode === "local") {
-      const [u] = await sysSql<{ id: string }[]>`select id from auth.users where lower(email) = ${email}
-        and encrypted_password = crypt(${password}, encrypted_password) and (banned_until is null or banned_until < now())`;
-      if (!u) return fail(null);
-      userId = u.id;
-    } else {
+    await ensureBootstrapped();
+    const [localUser] = await sysSql<{ id: string }[]>`
+      select id from auth.users
+      where lower(email) = ${email}
+        and encrypted_password = crypt(${password}, encrypted_password)
+        and (banned_until is null or banned_until < now())
+      limit 1`;
+    if (localUser) {
+      userId = localUser.id;
+    } else if (env.authMode === "supabase") {
       const supabase = await supabaseServer();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) return fail(null, error?.status === 429 ? "Too many attempts. Please wait a minute." : undefined);
       userId = data.user.id;
+    } else {
+      return fail(null);
     }
     const [p] = await sysSql<{ is_active: boolean; role: string }[]>`select is_active, role from profiles where id = ${userId}`;
     if (!p || !p.is_active) {
@@ -45,7 +52,7 @@ export async function login(_: ActionState, fd: FormData): Promise<ActionState> 
       return fail(userId, "This account is deactivated. Contact your administrator.");
     }
     role = p.role;
-    if (env.authMode === "local") await issueLocalSession(userId);
+    await issueLocalSession(userId);
     await sysSql`update profiles set last_login_at = now() where id = ${userId}`;
     await logEvent(userId, email, "login");
   } catch (e) {
@@ -58,9 +65,13 @@ export async function login(_: ActionState, fd: FormData): Promise<ActionState> 
 
 export async function logout() {
   const u = await getCurrentUser();
-  if (u) await logEvent(u.id, u.email, "logout");
-  if (env.authMode === "local") (await cookies()).delete(LOCAL_COOKIE);
-  else await (await supabaseServer()).auth.signOut();
+  if (u) {
+    try { await logEvent(u.id, u.email, "logout"); } catch { /* ignore */ }
+  }
+  (await cookies()).delete(LOCAL_COOKIE);
+  if (env.authMode !== "local") {
+    try { await (await supabaseServer()).auth.signOut(); } catch { /* ignore */ }
+  }
   redirect("/login");
 }
 
