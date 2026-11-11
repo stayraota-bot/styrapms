@@ -1,0 +1,162 @@
+{
+  "run": "2026-11-11T07:41:27.312Z",
+  "passed": 31,
+  "failed": 0,
+  "results": [
+    {
+      "name": "3. Owner created",
+      "pass": true,
+      "detail": "2f9ca569-b71e-4d44-9f90-9f1b2d93a506"
+    },
+    {
+      "name": "4–5. Property created with 40/60 agreement",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "6. Room added",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "1–2. User created with Property Manager role and property access",
+      "pass": true,
+      "detail": "e2e.mgr.82va@stayra.demo"
+    },
+    {
+      "name": "Permission: new manager sees only the assigned property",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "7–8. Booking created with ₹5,000 advance",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Negative: overlapping confirmed booking rejected",
+      "pass": true,
+      "detail": "This room already has a confirmed booking for some of these dates."
+    },
+    {
+      "name": "Check-in → check-out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "9. Food income ₹2,000 recorded",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Guest balance settled to ₹0",
+      "pass": true,
+      "detail": "Balance due₹0.00"
+    },
+    {
+      "name": "10–11. Ration bill ₹3,000 with uploaded bill (pending approval)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Permission: manager cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "12. Accountant approved both expenses",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "13. Net distributable = 15,000 + 2,000 − 3,000 = ₹14,000 (unpaid electricity excluded)",
+      "pass": true,
+      "detail": "14000"
+    },
+    {
+      "name": "14. Owner share 60% = ₹8,400",
+      "pass": true,
+      "detail": "8400"
+    },
+    {
+      "name": "15. STAYRA share 40% = ₹5,600",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "16. Draft settlement generated",
+      "pass": true,
+      "detail": "ef6a397d-13ee-4928-a4d5-580e97de75ac"
+    },
+    {
+      "name": "17. Settlement approved & locked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "18. Partial owner payment → Partially Paid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "19. Final owner payment → Paid, nothing payable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Settlement PDF downloads",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "20. P&L report (accrual): net ₹13,000 incl. unpaid electricity, unpaid ₹1,000 flagged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Excel export downloads",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "CSV export contains the net",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Negative: invalid sharing % (120) blocked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Negative: agreement change inside a settled period rejected",
+      "pass": true,
+      "detail": "Settlements already exist on or after 2026-10-15. New terms must start after the last settled period."
+    },
+    {
+      "name": "Historical settlement keeps 40/60",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Owner isolation: another owner's property is invisible",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Owner isolation: another owner's statement PDF is 404",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Owner isolation: export endpoints forbidden for owners",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Housekeeping cannot open finance pages",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

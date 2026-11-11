@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-50: #eef5f1;
+  --color-brand-100: #d5e7dd;
+  --color-brand-200: #acd0bc;
+  --color-brand-300: #7cb396;
+  --color-brand-400: #4f9372;
+  --color-brand-500: #2f7556;
+  --color-brand-600: #225e44;
+  --color-brand-700: #1b4b37;
+  --color-brand-800: #163c2d;
+  --color-brand-900: #102d22;
+  --color-brand-950: #0a1e16;
+
+  --color-sand-50: #faf7f2;
+  --color-sand-100: #f3ece0;
+  --color-sand-200: #e6d7bf;
+  --color-sand-400: #c8a97e;
+  --color-sand-600: #9c7a4f;
+  --color-clay-500: #b5654a;
+
+  --color-ink: #17221d;
+  --color-muted: #66736d;
+  --color-line: #e5e8e6;
+  --color-canvas: #f6f7f6;
+
+  --shadow-card: 0 1px 2px rgb(16 45 34 / 0.04), 0 1px 3px rgb(16 45 34 / 0.06);
+  --shadow-pop: 0 10px 30px -10px rgb(16 45 34 / 0.25);
+  --radius-card: 14px;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-canvas text-ink antialiased; font-feature-settings: "cv11", "ss01", "tnum"; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+  input[type="date"]::-webkit-calendar-picker-indicator { opacity: .6; cursor: pointer; }
+  ::selection { @apply bg-brand-100; }
+  /* Grid/flex children must be allowed to shrink so wide tables & charts scroll inside their card, not the page. */
+  .grid > * { min-width: 0; }
+}
+
+@utility tabular { font-variant-numeric: tabular-nums; }
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
