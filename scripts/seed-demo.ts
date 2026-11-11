@@ -47,11 +47,162 @@ async function createAuthUser(email: string, fullName: string): Promise<string> 
   return data.user.id;
 }
 
+async function seedDemoLeads() {
+  const [{ n }] = await sql<{ n: number }[]>`select count(*)::int n from leads`;
+  if (n > 0) return;
+  const props = await sql<{ id: string; name: string }[]>`select id, name from properties order by name`;
+  const units = await sql<{ id: string; property_id: string }[]>`select id, property_id from property_units order by property_id, sort_order`;
+  const users = await sql<{ id: string; role: string }[]>`select id, role::text from profiles`;
+  const byRole = Object.fromEntries(users.map((u) => [u.role, u.id]));
+  const pMountain = props.find((p) => p.name.includes("Mountain")) || props[0];
+  const pCity = props.find((p) => p.name.includes("City")) || props[1] || props[0];
+  const pVilla = props.find((p) => p.name.includes("Villa")) || props[2] || props[0];
+  const uMountain = units.find((u) => u.property_id === pMountain?.id);
+  const uCity = units.find((u) => u.property_id === pCity?.id);
+  const uVilla = units.find((u) => u.property_id === pVilla?.id);
+
+  const demoLeads = [
+    {
+      guest_name: "Rohan & Priya Deshmukh", guest_phone: "+91 98204 55112", guest_email: "rohan.deshmukh@gmail.com", guest_city: "Mumbai",
+      source: "whatsapp", source_detail: "Direct WhatsApp button", status: "negotiation", temperature: "hot",
+      property_id: pVilla?.id ?? null, unit_id: uVilla?.id ?? null, check_in: add(TODAY, 4), check_out: add(TODAY, 7), adults: 6, children: 2, rooms_needed: 1,
+      budget: 55000, quoted_amount: 58500, special_requests: "Private pool heating, bonfire + acoustic setup on Saturday night",
+      notes: "Family reunion group. Ready to pay 50% advance today if we include complimentary bonfire.",
+      next_follow_up_at: `${TODAY}T15:30:00+05:30`, follow_up_note: "Call Rohan to share UPI QR and confirm 50% advance payment",
+      assigned_to: byRole.property_manager,
+    },
+    {
+      guest_name: "Karanveer Malhotra", guest_phone: "+91 98111 77890", guest_email: "karan.m@outlook.com", guest_city: "Delhi NCR",
+      source: "instagram", source_detail: "Mountain Retreat Reel", status: "quoted", temperature: "hot",
+      property_id: pMountain?.id ?? null, unit_id: uMountain?.id ?? null, check_in: add(TODAY, 6), check_out: add(TODAY, 9), adults: 2, children: 0, rooms_needed: 1,
+      budget: 24000, quoted_amount: 22500, special_requests: "Anniversary room decor & candlelight dinner",
+      notes: "Sent PDF brochure & Mountain View Suite tariff on WhatsApp.",
+      next_follow_up_at: `${TODAY}T11:00:00+05:30`, follow_up_note: "Follow up on quote sent yesterday — confirm flight timings",
+      assigned_to: byRole.admin,
+    },
+    {
+      guest_name: "Ananya Nair (TechCorp Offsite)", guest_phone: "+91 99001 44210", guest_email: "ananya.nair@techcorp.in", guest_city: "Bengaluru",
+      source: "website", source_detail: "Corporate inquiry form", status: "follow_up", temperature: "hot",
+      property_id: pMountain?.id ?? null, unit_id: uMountain?.id ?? null, check_in: add(TODAY, 10), check_out: add(TODAY, 13), adults: 8, children: 0, rooms_needed: 4,
+      budget: 85000, quoted_amount: 82000, special_requests: "High-speed Wi-Fi, projector setup, GST invoice required",
+      notes: "Leadership retreat for 8 executives. Waiting for finance PO approval.",
+      next_follow_up_at: `${add(TODAY, -1)}T16:00:00+05:30`, follow_up_note: "Check if finance team approved the proforma invoice",
+      assigned_to: byRole.super_admin,
+    },
+    {
+      guest_name: "Siddharth & Meera Kulkarni", guest_phone: "+91 97654 32109", guest_email: "sid.kulkarni@yahoo.com", guest_city: "Pune",
+      source: "phone_call", source_detail: "Inbound reservation desk", status: "new", temperature: "warm",
+      property_id: pVilla?.id ?? null, unit_id: uVilla?.id ?? null, check_in: add(TODAY, 12), check_out: add(TODAY, 14), adults: 4, children: 1, rooms_needed: 1,
+      budget: 36000, quoted_amount: null, special_requests: "Jain food options for dinner & breakfast",
+      notes: "Inquired about weekend villa availability. Need to send quotation & menu.",
+      next_follow_up_at: `${TODAY}T17:00:00+05:30`, follow_up_note: "Send weekend villa tariff and Jain meal menu on WhatsApp",
+      assigned_to: byRole.property_manager,
+    },
+    {
+      guest_name: "Devika Sharma", guest_phone: "+91 98450 91234", guest_email: "devika.s@gmail.com", guest_city: "Hyderabad",
+      source: "airbnb_inquiry", source_detail: "Airbnb message thread", status: "contacted", temperature: "warm",
+      property_id: pCity?.id ?? null, unit_id: uCity?.id ?? null, check_in: add(TODAY, 5), check_out: add(TODAY, 8), adults: 2, children: 1, rooms_needed: 1,
+      budget: 16000, quoted_amount: 15000, special_requests: "Early check-in at 11 AM",
+      notes: "Reached out directly to save OTA fee. Shared direct booking link.",
+      next_follow_up_at: `${add(TODAY, 1)}T11:30:00+05:30`, follow_up_note: "Check if guest wants to lock the room for next week",
+      assigned_to: byRole.operations,
+    },
+    {
+      guest_name: "Vikramaditya Rao", guest_phone: "+91 98230 66778", guest_email: "vikram.rao@gmail.com", guest_city: "Mumbai",
+      source: "referral", source_detail: "Referred by past guest Mr. Mehta", status: "quoted", temperature: "hot",
+      property_id: pVilla?.id ?? null, unit_id: uVilla?.id ?? null, check_in: add(TODAY, 18), check_out: add(TODAY, 21), adults: 6, children: 0, rooms_needed: 1,
+      budget: 60000, quoted_amount: 57000, special_requests: "Airport pickup + chef on call",
+      notes: "Offered 5% repeat/referral privilege discount.",
+      next_follow_up_at: `${add(TODAY, 2)}T12:00:00+05:30`, follow_up_note: "Follow up on referral quote & airport transfer",
+      assigned_to: byRole.admin,
+    },
+    {
+      guest_name: "Nikhil & Sneha Bansal", guest_phone: "+91 98180 23456", guest_email: "nikhil.bansal@gmail.com", guest_city: "Gurugram",
+      source: "google", source_detail: "Google Maps listing call", status: "new", temperature: "warm",
+      property_id: pMountain?.id ?? null, unit_id: null, check_in: add(TODAY, 15), check_out: add(TODAY, 18), adults: 2, children: 0, rooms_needed: 1,
+      budget: 20000, quoted_amount: null, special_requests: "Valley view balcony room",
+      notes: "First-time caller from Google listing.",
+      next_follow_up_at: `${add(TODAY, -1)}T14:00:00+05:30`, follow_up_note: "Call back with valley-view room availability",
+      assigned_to: byRole.property_manager,
+    },
+    {
+      guest_name: "Wanderlust Holidays (Travel Agent)", guest_phone: "+91 98990 11220", guest_email: "bookings@wanderlust.in", guest_city: "Ahmedabad",
+      source: "travel_agent", source_detail: "B2B partner desk", status: "follow_up", temperature: "warm",
+      property_id: pCity?.id ?? null, unit_id: uCity?.id ?? null, check_in: add(TODAY, 8), check_out: add(TODAY, 11), adults: 4, children: 0, rooms_needed: 2,
+      budget: 24000, quoted_amount: 25200, special_requests: "Twin beds in both rooms",
+      notes: "B2B net rate shared with travel agent.",
+      next_follow_up_at: `${add(TODAY, 3)}T15:00:00+05:30`, follow_up_note: "Confirm voucher & guest names from agent",
+      assigned_to: byRole.admin,
+    },
+    {
+      guest_name: "Pooja & Aditya Verma", guest_phone: "+91 97112 88990", guest_email: "pooja.verma@gmail.com", guest_city: "Noida",
+      source: "facebook", source_detail: "Winter Getaway Lead Ad", status: "contacted", temperature: "cold",
+      property_id: null, unit_id: null, check_in: add(TODAY, 25), check_out: add(TODAY, 28), adults: 2, children: 2, rooms_needed: 1,
+      budget: 18000, quoted_amount: null, special_requests: "Kid-friendly activities",
+      notes: "Exploring options for next month.",
+      next_follow_up_at: `${add(TODAY, 4)}T11:00:00+05:30`, follow_up_note: "Share family package options",
+      assigned_to: byRole.operations,
+    },
+    {
+      guest_name: "Harshvardhan Goenka", guest_phone: "+91 98300 44556", guest_email: "h.goenka@gmail.com", guest_city: "Kolkata",
+      source: "repeat_guest", source_detail: "Stayed in Aug 2026", status: "won", temperature: "hot",
+      property_id: pMountain?.id ?? null, unit_id: uMountain?.id ?? null, check_in: add(TODAY, 3), check_out: add(TODAY, 6), adults: 2, children: 0, rooms_needed: 1,
+      budget: 24000, quoted_amount: 21000, special_requests: "Same corner room as last stay",
+      notes: "Repeat guest — confirmed booking & paid UPI advance.",
+      next_follow_up_at: null, follow_up_note: null,
+      assigned_to: byRole.property_manager,
+    },
+    {
+      guest_name: "Ritika Chawla", guest_phone: "+91 98710 55667", guest_email: "ritika@gmail.com", guest_city: "Chandigarh",
+      source: "makemytrip_inquiry", source_detail: "MMT chat inquiry", status: "lost", temperature: "cold",
+      property_id: pCity?.id ?? null, unit_id: uCity?.id ?? null, check_in: add(TODAY, 2), check_out: add(TODAY, 4), adults: 2, children: 0, rooms_needed: 1,
+      budget: 7000, quoted_amount: 10500, special_requests: null,
+      notes: "Guest budget was below minimum floor rate.",
+      lost_reason: "Budget mismatch — guest looking under ₹3,500/night",
+      next_follow_up_at: null, follow_up_note: null,
+      assigned_to: byRole.operations,
+    },
+  ];
+
+  for (const l of demoLeads) {
+    const [ins] = await sql<{ id: string }[]>`
+      insert into leads (
+        guest_name, guest_phone, guest_whatsapp, guest_email, guest_city,
+        source, source_detail, status, temperature, property_id, unit_id,
+        check_in, check_out, adults, children, rooms_needed,
+        budget, quoted_amount, special_requests, notes, lost_reason,
+        next_follow_up_at, follow_up_note, reminder_completed,
+        assigned_to, is_demo, created_by
+      ) values (
+        ${l.guest_name}, ${l.guest_phone}, ${l.guest_phone}, ${l.guest_email}, ${l.guest_city},
+        ${l.source}, ${l.source_detail}, ${l.status}, ${l.temperature}, ${l.property_id}, ${l.unit_id},
+        ${l.check_in}, ${l.check_out}, ${l.adults}, ${l.children}, ${l.rooms_needed},
+        ${l.budget}, ${l.quoted_amount}, ${l.special_requests}, ${l.notes}, ${(l as { lost_reason?: string }).lost_reason ?? null},
+        ${l.next_follow_up_at}, ${l.follow_up_note}, ${l.status === "won" || l.status === "lost"},
+        ${l.assigned_to ?? byRole.super_admin}, true, ${byRole.super_admin}
+      ) returning id`;
+
+    await sql`
+      insert into lead_activities (lead_id, activity_type, summary, new_status, quoted_amount, follow_up_at, created_by, created_by_name)
+      values (
+        ${ins.id},
+        ${l.quoted_amount ? "quote_sent" : "call"},
+        ${l.notes || "Initial inquiry logged"},
+        ${l.status},
+        ${l.quoted_amount},
+        ${l.next_follow_up_at},
+        ${l.assigned_to ?? byRole.super_admin},
+        'STAYRA Reservations'
+      )`;
+  }
+  console.log(`✓ Seeded ${demoLeads.length} demo CRM leads`);
+}
+
 async function main() {
   const [{ real }] = await sql`select count(*)::int real from properties where not is_demo`;
   if (real > 0) { console.error("This database contains real (non-demo) properties. Demo data will NOT be mixed in."); process.exit(1); }
   const [{ demo }] = await sql`select count(*)::int demo from properties where is_demo`;
-  if (demo > 0) { console.log("Demo data already present — nothing to do."); await sql.end(); return; }
+  if (demo > 0) { await seedDemoLeads(); console.log("Demo data already present — nothing to do."); await sql.end(); return; }
 
   // ------------------------------------------------------------- users
   const people: [string, string, string, boolean?][] = [
@@ -282,6 +433,7 @@ async function main() {
       ('booking_new','Upcoming arrivals tomorrow','Check room readiness on the calendar','/calendar','info', 300)) n(type,title,body,link,severity,mins)
     where p.role in ('super_admin','admin','accountant','property_manager')`;
 
+  await seedDemoLeads();
   console.log(`✓ Demo data created: 3 properties, ${bookingCount} bookings. Password for all demo users: ${PASSWORD}`);
   console.log(people.map(([e, n, r]) => `   ${r.padEnd(17)} ${e}`).join("\n"));
   await sql.end();

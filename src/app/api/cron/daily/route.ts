@@ -17,6 +17,15 @@ export async function GET(req: NextRequest) {
   const unpaid = await sysSql<{ property_id: string; c: number }[]>`select b.property_id, count(*)::int c from bookings b join booking_financials f on f.booking_id = b.id
     where b.status = 'confirmed' and b.check_in between ${t}::date and ${addDays(t, 2)}::date and f.net_paid = 0 group by 1`;
   for (const a of unpaid) await sysSql`select app.notify_property_users(${a.property_id}, array['property_manager','accountant']::app_role[], 'payment_pending', ${`${a.c} upcoming booking(s) with no payment`}, 'Collect an advance before arrival', '/bookings?view=upcoming', 'warning')`;
+  const leadReminders = await sysSql<{ assigned_to: string; c: number }[]>`
+    select assigned_to, count(*)::int c from leads
+    where assigned_to is not null and not reminder_completed and status not in ('won','lost')
+      and next_follow_up_at is not null and (next_follow_up_at AT TIME ZONE 'Asia/Kolkata')::date <= ${t}::date
+    group by 1`;
+  for (const lr of leadReminders) {
+    await sysSql`insert into notifications(user_id, type, title, body, link, severity)
+      values (${lr.assigned_to}, 'lead_reminder', ${`${lr.c} lead follow-up(s) due today`}, 'Check your CRM follow-up reminders queue', '/leads?view=reminders', 'warning')`;
+  }
   const sent = await dispatchPending();
-  return NextResponse.json({ ok: true, date: t, recurringGenerated: n, arrivals: arrivals.length, departures: departures.length, unpaid: unpaid.length, externalSent: sent });
+  return NextResponse.json({ ok: true, date: t, recurringGenerated: n, arrivals: arrivals.length, departures: departures.length, unpaid: unpaid.length, leadReminders: leadReminders.length, externalSent: sent });
 }

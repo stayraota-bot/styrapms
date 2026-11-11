@@ -29,6 +29,8 @@ export const can = {
   recordGuestPayment: (r: Role) => ["super_admin", "admin", "property_manager", "accountant"].includes(r),
   manageBookings: (r: Role) => ["super_admin", "admin", "property_manager", "operations"].includes(r),
   viewBookings: (r: Role) => r !== "housekeeping",
+  viewLeads: (r: Role) => ["super_admin", "admin", "property_manager", "operations", "accountant", "auditor"].includes(r),
+  manageLeads: (r: Role) => ["super_admin", "admin", "property_manager", "operations"].includes(r),
   manageProperties: (r: Role) => ["super_admin", "admin"].includes(r),
   addProperty: (r: Role) => r === "super_admin",
   manageRooms: (r: Role) => ["super_admin", "admin", "property_manager"].includes(r),

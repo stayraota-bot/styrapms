@@ -4,7 +4,7 @@ import { withUser } from "@/lib/db";
 import { can } from "@/lib/permissions";
 import { resolveRange } from "@/server/analytics";
 import { buildReport, toCSV, toXLSX, REPORTS, type Report } from "@/server/reports";
-import { SOURCE_LABEL } from "@/lib/format";
+import { SOURCE_LABEL, LEAD_SOURCE_LABEL, LEAD_STATUS_LABEL } from "@/lib/format";
 
 export const runtime = "nodejs";
 const uuid = (v: string | null) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : null);
@@ -13,13 +13,55 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ kind
   const { kind } = await params;
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
-  if (!can.viewFinance(user.role)) return new NextResponse("Forbidden", { status: 403 });
+  if (kind === "leads" ? !can.viewLeads(user.role) : !can.viewFinance(user.role)) return new NextResponse("Forbidden", { status: 403 });
   const q = req.nextUrl.searchParams;
   const r = resolveRange({ range: q.get("range") ?? undefined, from: q.get("from") ?? undefined, to: q.get("to") ?? undefined });
   const pid = uuid(q.get("property"));
   const format = q.get("format") === "csv" ? "csv" : "xlsx";
   const report: Report = await withUser(user.id, async (tx) => {
     if (kind in REPORTS) return buildReport(tx, kind, { from: r.from, to: r.to, propertyId: pid, propertyIds: q.getAll("p").map(uuid).filter(Boolean) as string[] });
+    if (kind === "leads") {
+      const status = q.get("status") ?? "";
+      const source = q.get("source") ?? "";
+      const temp = q.get("temperature") ?? "";
+      const rows = await tx`
+        select l.lead_code, l.guest_name, l.guest_phone, l.guest_whatsapp, l.guest_email, l.guest_city,
+          l.source::text source, l.source_detail, l.status::text status, l.temperature::text temperature,
+          p.name property, u.name room, l.check_in::text, l.check_out::text, l.adults, l.children, l.rooms_needed,
+          l.budget, l.quoted_amount,
+          (l.next_follow_up_at AT TIME ZONE 'Asia/Kolkata')::date::text next_follow_up_date,
+          l.follow_up_note, pr.full_name assigned_to, b.booking_code converted_booking,
+          l.special_requests, l.notes, l.lost_reason, (l.created_at AT TIME ZONE 'Asia/Kolkata')::date::text created_date
+        from leads l
+        left join properties p on p.id = l.property_id
+        left join property_units u on u.id = l.unit_id
+        left join profiles pr on pr.id = l.assigned_to
+        left join bookings b on b.id = l.converted_booking_id
+        where (${pid}::uuid is null or l.property_id = ${pid}::uuid)
+          and (${status} = '' or l.status::text = ${status})
+          and (${source} = '' or l.source::text = ${source})
+          and (${temp} = '' or l.temperature::text = ${temp})
+        order by l.created_at desc limit 20000`;
+      rows.forEach((x) => {
+        x.source = LEAD_SOURCE_LABEL[x.source] ?? x.source;
+        x.status = LEAD_STATUS_LABEL[x.status] ?? x.status;
+      });
+      return {
+        title: "CRM Leads",
+        rows,
+        columns: [
+          "lead_code", "guest_name", "guest_phone", "guest_whatsapp", "guest_email", "guest_city",
+          "source", "source_detail", "status", "temperature", "property", "room",
+          "check_in", "check_out", "adults", "children", "rooms_needed", "budget", "quoted_amount",
+          "next_follow_up_date", "follow_up_note", "assigned_to", "converted_booking",
+          "special_requests", "notes", "lost_reason", "created_date",
+        ].map((k) => ({
+          key: k,
+          label: k.replace(/_/g, " "),
+          type: ["budget", "quoted_amount"].includes(k) ? ("money" as const) : undefined,
+        })),
+      };
+    }
     if (kind === "bookings") {
       const rows = await tx`select b.booking_code, p.name property, u.name room, g.full_name guest, g.phone, b.check_in, b.check_out, b.nights, b.source::text source, b.status::text status,
           b.room_amount, b.discount, b.tax_amount, b.ota_commission, f.amount_due, f.net_paid, f.balance_due, f.payment_status

@@ -52,3 +52,23 @@ export const SOURCE_LABEL: Record<string, string> = {
   direct: "Direct", airbnb: "Airbnb", booking_com: "Booking.com", makemytrip: "MakeMyTrip", goibibo: "Goibibo", agoda: "Agoda",
   expedia: "Expedia", walk_in: "Walk-in", travel_agent: "Travel Agent", corporate: "Corporate", other: "Other",
 };
+
+export const LEAD_SOURCE_LABEL: Record<string, string> = {
+  whatsapp: "WhatsApp", phone_call: "Phone Call", instagram: "Instagram", facebook: "Facebook Ads",
+  website: "Website", google: "Google / GMB", airbnb_inquiry: "Airbnb Inquiry", makemytrip_inquiry: "MakeMyTrip Inquiry",
+  referral: "Guest Referral", repeat_guest: "Repeat Guest", travel_agent: "Travel Agent", walk_in: "Walk-in", other: "Other",
+};
+
+export const LEAD_STATUS_LABEL: Record<string, string> = {
+  new: "New Inquiry", contacted: "Contacted", quoted: "Quote Sent",
+  follow_up: "Follow-up", negotiation: "Negotiation", won: "Won / Booked", lost: "Lost",
+};
+
+export const LEAD_TEMP_LABEL: Record<string, string> = {
+  hot: "Hot 🔥", warm: "Warm", cold: "Cold",
+};
+
+export const LEAD_ACTIVITY_LABEL: Record<string, string> = {
+  note: "Note", call: "Phone Call", whatsapp: "WhatsApp", email: "Email",
+  quote_sent: "Quote Sent", status_change: "Status Updated", reminder_set: "Reminder Scheduled", converted: "Converted to Booking",
+};

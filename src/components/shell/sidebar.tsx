@@ -67,7 +67,7 @@ export function MobileNav({ items }: { items: NavItem[] }) {
 
 export function BottomBar({ items }: { items: NavItem[] }) {
   const path = usePathname();
-  const pick = ["/", "/bookings", "/calendar", "/expenses", "/housekeeping", "/maintenance"]
+  const pick = ["/", "/leads", "/bookings", "/calendar", "/expenses", "/housekeeping", "/maintenance"]
     .map((h) => items.find((i) => i.href === h)).filter(Boolean).slice(0, 5) as NavItem[];
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-line grid pb-[env(safe-area-inset-bottom)]" style={{ gridTemplateColumns: `repeat(${pick.length}, 1fr)` }}>

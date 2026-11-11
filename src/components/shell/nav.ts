@@ -6,6 +6,7 @@ const FIN: Role[] = ["super_admin", "admin", "property_manager", "accountant", "
 
 export const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard", roles: [...STAFF, "housekeeping"] },
+  { href: "/leads", label: "Leads / CRM", icon: "Headset", roles: STAFF },
   { href: "/properties", label: "Properties", icon: "Building2", roles: STAFF },
   { href: "/owners", label: "Owners", icon: "UserRound", roles: ["super_admin", "admin", "accountant", "auditor", "property_manager"] },
   { href: "/bookings", label: "Bookings", icon: "BookOpenCheck", roles: STAFF },

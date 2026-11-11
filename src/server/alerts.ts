@@ -42,6 +42,28 @@ export async function getAlerts(tx: Tx, opts: { propertyId?: string | null; with
   const [hk] = await tx<{ n: number }[]>`select count(*)::int n from housekeeping_tasks where status in ('pending','assigned','in_progress') and due_date <= ${t}::date and (${pid}::uuid is null or property_id = ${pid}::uuid)`;
   if (hk?.n) out.push({ severity: "info", type: "Housekeeping", title: `${hk.n} cleaning task${hk.n > 1 ? "s" : ""} pending`, detail: "Due today or overdue", href: "/housekeeping" });
 
+  const dueLeads = await tx<{ id: string; lead_code: string; guest_name: string; guest_phone: string; prop: string | null; follow_up_date: string; follow_up_note: string | null; temperature: string }[]>`
+    select l.id, l.lead_code, l.guest_name, l.guest_phone, p.name prop,
+      (l.next_follow_up_at AT TIME ZONE 'Asia/Kolkata')::date::text follow_up_date,
+      l.follow_up_note, l.temperature::text
+    from leads l left join properties p on p.id = l.property_id
+    where not l.reminder_completed and l.status not in ('won','lost')
+      and l.next_follow_up_at is not null
+      and (l.next_follow_up_at AT TIME ZONE 'Asia/Kolkata')::date <= ${t}::date
+      and (${pid}::uuid is null or l.property_id = ${pid}::uuid)
+    order by l.next_follow_up_at asc limit 10`;
+  for (const l of dueLeads) {
+    const overdue = l.follow_up_date < t;
+    out.push({
+      severity: overdue || l.temperature === "hot" ? "warning" : "info",
+      type: overdue ? "Overdue Lead Follow-up" : "Lead Follow-up Today",
+      title: `${l.lead_code} · ${l.guest_name} (${l.guest_phone})`,
+      detail: `${l.prop ? l.prop.replace("STAYRA ", "") + " · " : ""}${l.follow_up_note || `Follow up due ${fdate(l.follow_up_date, false)}`}`,
+      href: `/leads/${l.id}`,
+      date: l.follow_up_date,
+    });
+  }
+
   if (opts.withFinance) {
     const unpaid = await tx<{ id: string; booking_code: string; guest: string; check_in: string; balance_due: string; prop: string }[]>`
       select b.id, b.booking_code, g.full_name guest, b.check_in, f.balance_due, p.name prop

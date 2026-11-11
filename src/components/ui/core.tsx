@@ -71,6 +71,8 @@ export const STATUS_TONE: Record<string, Tone> = {
   checked_in: "blue", cancelled: "red", no_show: "red", onboarding: "blue", inactive: "gray", archived: "gray", overpaid: "purple", refunded: "gray",
   open: "orange", assigned: "blue", in_progress: "blue", closed: "gray", dirty: "orange", cleaning: "blue", inspection: "purple", out_of_order: "red",
   low: "gray", medium: "blue", high: "orange", critical: "red",
+  new: "blue", contacted: "amber", quoted: "purple", follow_up: "orange", negotiation: "amber", won: "green", lost: "gray",
+  hot: "red", warm: "orange", cold: "blue",
 };
 export function StatusBadge({ status, label }: { status: string | null | undefined; label?: string }) {
   const s = status ?? "";
