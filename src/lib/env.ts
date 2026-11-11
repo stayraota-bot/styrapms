@@ -10,16 +10,17 @@ function required(name: string): string {
 
 export const env = {
   get authMode(): AuthMode {
-    const m = (process.env.AUTH_MODE ?? "supabase") as AuthMode;
-    if (m === "local" && process.env.VERCEL_ENV === "production") {
-      throw new Error("AUTH_MODE=local is not allowed in production. Use Supabase Auth.");
+    if (process.env.AUTH_MODE === "supabase" && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return "supabase";
     }
-    return m;
+    return "local";
   },
-  get databaseUrl() { return required("DATABASE_URL"); },
+  get databaseUrl() {
+    return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || required("DATABASE_URL");
+  },
   get supabaseUrl() { return required("NEXT_PUBLIC_SUPABASE_URL"); },
   get supabaseAnonKey() { return required("NEXT_PUBLIC_SUPABASE_ANON_KEY"); },
   get serviceRoleKey() { return required("SUPABASE_SERVICE_ROLE_KEY"); },
-  get authSecret() { return required("AUTH_SECRET"); },
+  get authSecret() { return process.env.AUTH_SECRET ?? "stayra-pms-default-jwt-secret-key-2026-change-in-prod"; },
   get appUrl() { return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"; },
 };

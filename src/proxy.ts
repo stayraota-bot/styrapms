@@ -10,7 +10,8 @@ export async function proxy(req: NextRequest) {
   let res = NextResponse.next({ request: req });
   let signedIn = false;
 
-  if ((process.env.AUTH_MODE ?? "supabase") === "local") {
+  const useSupabase = process.env.AUTH_MODE === "supabase" && !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!useSupabase) {
     signedIn = !!req.cookies.get("stayra_session")?.value;
   } else {
     const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {

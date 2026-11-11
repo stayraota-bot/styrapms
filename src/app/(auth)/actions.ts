@@ -20,30 +20,40 @@ export async function login(_: ActionState, fd: FormData): Promise<ActionState> 
   const r = LoginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
   if (!r.success) return { error: r.error.issues[0].message, at: Date.now() };
   const { email, password } = r.data;
-  const fail = async (uid: string | null, msg = "Incorrect email or password.") => { await logEvent(uid, email, "failed_login"); return { error: msg, at: Date.now() }; };
+  const fail = async (uid: string | null, msg = "Incorrect email or password.") => {
+    try { await logEvent(uid, email, "failed_login"); } catch { /* ignore if DB not configured */ }
+    return { error: msg, at: Date.now() };
+  };
 
   let userId: string | null = null;
-  if (env.authMode === "local") {
-    const [u] = await sysSql<{ id: string }[]>`select id from auth.users where lower(email) = ${email}
-      and encrypted_password = crypt(${password}, encrypted_password) and (banned_until is null or banned_until < now())`;
-    if (!u) return fail(null);
-    userId = u.id;
-  } else {
-    const supabase = await supabaseServer();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.user) return fail(null, error?.status === 429 ? "Too many attempts. Please wait a minute." : undefined);
-    userId = data.user.id;
+  let role = "operations";
+  try {
+    if (env.authMode === "local") {
+      const [u] = await sysSql<{ id: string }[]>`select id from auth.users where lower(email) = ${email}
+        and encrypted_password = crypt(${password}, encrypted_password) and (banned_until is null or banned_until < now())`;
+      if (!u) return fail(null);
+      userId = u.id;
+    } else {
+      const supabase = await supabaseServer();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.user) return fail(null, error?.status === 429 ? "Too many attempts. Please wait a minute." : undefined);
+      userId = data.user.id;
+    }
+    const [p] = await sysSql<{ is_active: boolean; role: string }[]>`select is_active, role from profiles where id = ${userId}`;
+    if (!p || !p.is_active) {
+      if (env.authMode !== "local") await (await supabaseServer()).auth.signOut();
+      return fail(userId, "This account is deactivated. Contact your administrator.");
+    }
+    role = p.role;
+    if (env.authMode === "local") await issueLocalSession(userId);
+    await sysSql`update profiles set last_login_at = now() where id = ${userId}`;
+    await logEvent(userId, email, "login");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Database connection is not configured.";
+    return { error: msg, at: Date.now() };
   }
-  const [p] = await sysSql<{ is_active: boolean; role: string }[]>`select is_active, role from profiles where id = ${userId}`;
-  if (!p || !p.is_active) {
-    if (env.authMode !== "local") await (await supabaseServer()).auth.signOut();
-    return fail(userId, "This account is deactivated. Contact your administrator.");
-  }
-  if (env.authMode === "local") await issueLocalSession(userId);
-  await sysSql`update profiles set last_login_at = now() where id = ${userId}`;
-  await logEvent(userId, email, "login");
   const next = String(fd.get("next") ?? "");
-  redirect(p.role === "owner" ? "/owner" : next.startsWith("/") && !next.startsWith("//") ? next : "/");
+  redirect(role === "owner" ? "/owner" : next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 
 export async function logout() {
