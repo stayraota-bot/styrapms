@@ -21,8 +21,21 @@ function create(): Sql {
   }) as unknown as Sql;
 }
 
-/** Privileged connection. Only for auth bootstrap & system jobs — never for user-driven reads. */
-export const sysSql: Sql = g.__stayraSql ?? (g.__stayraSql = create());
+function getSql(): Sql {
+  return g.__stayraSql ?? (g.__stayraSql = create());
+}
+
+/** Privileged connection (lazy-initialized so `next build` does not require DATABASE_URL at build time). */
+export const sysSql: Sql = new Proxy((() => {}) as unknown as Sql, {
+  apply(_target, thisArg, argArray) {
+    return Reflect.apply(getSql() as unknown as (...args: unknown[]) => unknown, thisArg, argArray);
+  },
+  get(_target, prop) {
+    const instance = getSql() as unknown as Record<PropertyKey, unknown>;
+    const val = instance[prop];
+    return typeof val === "function" ? val.bind(instance) : val;
+  },
+});
 
 /**
  * Run queries as the signed-in user. Switches to the `authenticated` role and sets the JWT
