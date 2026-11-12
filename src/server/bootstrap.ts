@@ -106,7 +106,7 @@ async function seedInitialDemoData() {
 
   for (const pid of [p1Id, p2Id, p3Id]) {
     for (const r of ["admin", "property_manager", "operations", "housekeeping"]) {
-      await sysSql`insert into user_property_access(user_id, property_id, assigned_by) values (${U[r]}, ${pid}, ${U.super_admin}) on conflict do nothing`;
+      await sysSql`insert into user_property_access(user_id, property_id, granted_by) values (${U[r]}, ${pid}, ${U.super_admin}) on conflict do nothing`;
     }
   }
 
