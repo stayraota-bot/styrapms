@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/core";
 import { AutoSubmit } from "@/components/ui/forms";
 import { QuickStatusModal, CompleteReminderButtons, CsvImportModal, ConvertLeadModal } from "@/components/lead-form";
+import { WhatsAppHubModal, QuickWhatsAppGroupButton } from "@/components/whatsapp-hub";
 import { updateLeadStatus, completeReminder, importLeadsCsv, convertLeadToBooking } from "./actions";
 
 export const metadata = { title: "Leads & CRM" };
@@ -349,20 +350,24 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
                           <div className="flex items-center gap-1">
                             <a
                               href={`tel:${r.guest_phone}`}
-                              className="rounded-md p-1.5 text-muted hover:bg-gray-100 hover:text-ink"
+                              className="rounded-md p-1 text-muted hover:bg-gray-100 hover:text-ink"
                               title={`Call ${r.guest_phone}`}
                             >
                               <Phone className="size-3.5" />
                             </a>
-                            <a
-                              href={waHref(r.guest_whatsapp || r.guest_phone, r.guest_name, r.lead_code)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="rounded-md p-1.5 text-brand-700 hover:bg-brand-50"
-                              title="Message on WhatsApp"
-                            >
-                              <MessageCircle className="size-3.5" />
-                            </a>
+                            <WhatsAppHubModal
+                              lead={r}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="rounded-md p-1 text-emerald-700 hover:bg-emerald-50"
+                                  title="Open WhatsApp templates (Quote, Follow-ups, Upsell, Group)"
+                                >
+                                  <MessageCircle className="size-3.5" />
+                                </button>
+                              }
+                            />
+                            <QuickWhatsAppGroupButton lead={r} />
                           </div>
                           <div className="flex items-center gap-1">
                             {canManage && (
@@ -453,14 +458,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
                             >
                               <Phone className="size-3.5" />Call
                             </a>
-                            <a
-                              href={waHref(r.guest_whatsapp || r.guest_phone, r.guest_name, r.lead_code)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-lg bg-brand-50 text-brand-800 px-2.5 py-1.5 text-xs font-medium hover:bg-brand-100"
-                            >
-                              <MessageCircle className="size-3.5" />WhatsApp
-                            </a>
+                            <WhatsAppHubModal lead={r} />
+                            <QuickWhatsAppGroupButton lead={r} />
                             {canManage && <CompleteReminderButtons leadId={r.id} action={completeReminder} />}
                           </div>
                         </div>
@@ -513,18 +512,22 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
                         </Td>
                         <Td>
                           <div className="text-sm font-medium whitespace-nowrap">{r.guest_phone}</div>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
                             <a href={`tel:${r.guest_phone}`} className="text-xs text-brand-700 hover:underline inline-flex items-center gap-0.5">
                               <Phone className="size-3" />Call
                             </a>
-                            <a
-                              href={waHref(r.guest_whatsapp || r.guest_phone, r.guest_name, r.lead_code)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-emerald-700 hover:underline inline-flex items-center gap-0.5"
-                            >
-                              <MessageCircle className="size-3" />WhatsApp
-                            </a>
+                            <WhatsAppHubModal
+                              lead={r}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="text-xs text-emerald-700 hover:underline inline-flex items-center gap-0.5"
+                                >
+                                  <MessageCircle className="size-3" />WhatsApp Hub
+                                </button>
+                              }
+                            />
+                            <QuickWhatsAppGroupButton lead={r} />
                           </div>
                         </Td>
                         <Td>
@@ -568,6 +571,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
                         </Td>
                         <Td className="text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1.5">
+                            <WhatsAppHubModal lead={r} />
                             {canManage && (
                               <QuickStatusModal
                                 lead={r}

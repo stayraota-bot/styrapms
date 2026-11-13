@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   Phone, MessageCircle, Mail, AlarmClock, Calendar, Edit3,
-  CheckCircle2, Sparkles, Clock, Send, FileText, ArrowRight,
+  CheckCircle2, Sparkles, Clock, Send, FileText, ArrowRight, Users,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth/session";
 import { withUser } from "@/lib/db";
@@ -20,6 +20,9 @@ import { ActionForm, Field, SubmitButton, Modal } from "@/components/ui/forms";
 import {
   LeadForm, QuickStatusModal, CompleteReminderButtons, ConvertLeadModal,
 } from "@/components/lead-form";
+import {
+  WhatsAppHubModal, QuickWhatsAppGroupButton,
+} from "@/components/whatsapp-hub";
 import {
   updateLead, updateLeadStatus, addLeadActivity,
   scheduleFollowUp, completeReminder, convertLeadToBooking,
@@ -160,19 +163,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         description={`${LEAD_SOURCE_LABEL[lead.source] ?? lead.source}${lead.source_detail ? ` (${lead.source_detail})` : ""} · Created ${fdatetime(lead.created_at)}${lead.assigned_name ? ` · Assigned to ${lead.assigned_name}` : ""}`}
         actions={
           <>
+            <QuickWhatsAppGroupButton lead={lead} />
+            <WhatsAppHubModal lead={lead} />
             <a
               href={`tel:${lead.guest_phone}`}
               className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 h-10 text-sm font-medium text-ink hover:bg-sand-50 shadow-sm"
             >
-              <Phone className="size-4 text-brand-700" />Call {lead.guest_phone}
-            </a>
-            <a
-              href={waHref(lead.guest_whatsapp || lead.guest_phone, lead.guest_name, lead.lead_code)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 h-10 text-sm font-medium text-white hover:bg-emerald-700 shadow-sm"
-            >
-              <MessageCircle className="size-4" />WhatsApp
+              <Phone className="size-4 text-brand-700" />Call
             </a>
             {canManage && (
               <QuickStatusModal
@@ -295,8 +292,62 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       )}
 
       <div className="grid lg:grid-cols-3 gap-6 items-start">
-        {/* Left 2 Columns: Follow-up Reminder + Log Activity + Timeline */}
+        {/* Left 2 Columns: WhatsApp Hub + Follow-up Reminder + Log Activity + Timeline */}
         <div className="lg:col-span-2 space-y-6">
+          {/* WhatsApp Communications Card */}
+          <Card className="border-emerald-200 bg-emerald-50/20">
+            <CardHeader
+              title={
+                <span className="flex items-center gap-2 text-emerald-900 font-semibold">
+                  <MessageCircle className="size-4 text-emerald-700" />
+                  <span>WhatsApp Team Group & Customer Automation Hub</span>
+                </span>
+              }
+              description="Post lead alerts into your common staff WhatsApp Group, or send quotes, follow-ups, and upselling messages directly to the customer in 1 click."
+              action={<WhatsAppHubModal lead={lead} />}
+            />
+            <CardBody className="pt-0">
+              <div className="grid sm:grid-cols-2 gap-2.5">
+                <div className="rounded-lg bg-white border border-line p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-ink flex items-center gap-1.5">
+                      <Users className="size-3.5 text-emerald-700" />1. Common Team Group
+                    </span>
+                    <Badge tone="green">Staff Alert</Badge>
+                  </div>
+                  <p className="text-[11.5px] text-muted">
+                    Broadcasts complete lead card (guest contact, stay dates, pax, quote & PMS link) into your WhatsApp staff group.
+                  </p>
+                  <div className="pt-1">
+                    <QuickWhatsAppGroupButton lead={lead} />
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-white border border-line p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-ink flex items-center gap-1.5">
+                      <Sparkles className="size-3.5 text-brand-700" />2. Customer Messages
+                    </span>
+                    <Badge tone="blue">Direct to Guest</Badge>
+                  </div>
+                  <p className="text-[11.5px] text-muted">
+                    Pre-filled templates: Quote & greeting, gentle follow-up, high demand urgency, 50% advance UPI, BBQ & meals upsell.
+                  </p>
+                  <div className="pt-1">
+                    <WhatsAppHubModal
+                      lead={lead}
+                      trigger={
+                        <Button type="button" size="sm" variant="secondary" className="h-7 text-xs">
+                          Open Message Templates →
+                        </Button>
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
           {/* Follow-up Reminder Card */}
           <Card className={isOverdue ? "border-red-300 bg-red-50/20" : isDueToday ? "border-amber-300 bg-amber-50/20" : ""}>
             <CardHeader
